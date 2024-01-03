@@ -69,7 +69,7 @@ sema_down (struct semaphore *sema)
   old_level = intr_disable ();
   while (sema->value == 0) 
     {
-      // Lily
+      //  
       // if (true) {
       //   // thread_current()->locked_by = lock;
       //   // list_insert_ordered(&lock->holder->threads_locked,
@@ -77,7 +77,7 @@ sema_down (struct semaphore *sema)
 
       //   // donation_acquire();
       // }
-      // Lily
+      //  
       list_insert_ordered(&sema->waiters, &thread_current ()->elem, 
         (list_less_func *)cmp_priority, NULL);
 
@@ -128,7 +128,7 @@ sema_up (struct semaphore *sema)
 
   if (!list_empty (&sema->waiters)) {
 
-    // Lily
+    //  
     list_sort(&sema->waiters, (list_less_func *)cmp_priority, NULL);
 
     thread_unblock (list_entry (list_pop_front (&sema->waiters),
@@ -138,7 +138,7 @@ sema_up (struct semaphore *sema)
   sema->value++;
   intr_set_level (old_level);
 
-  // Lily
+  //  
   // check_priority();
 }
 
@@ -218,7 +218,7 @@ lock_acquire (struct lock *lock)
   ASSERT (!intr_context ());
   ASSERT (!lock_held_by_current_thread (lock));
 
-  // Lily
+  //  
   if (!thread_mlfqs && lock->holder != NULL) {
 
     thread_current()->locked_by = lock;
@@ -235,7 +235,7 @@ lock_acquire (struct lock *lock)
 
   sema_down (&lock->semaphore);
 
-  // Lily
+  //  
   thread_current()->locked_by = NULL;
 
   lock->holder = thread_current ();
@@ -272,7 +272,7 @@ lock_release (struct lock *lock)
   ASSERT (lock != NULL);
   ASSERT (lock_held_by_current_thread (lock));
 
-  // Lily
+  //  
   if (!thread_mlfqs) 
   {
     // printf("lock_release\n");
@@ -313,11 +313,11 @@ struct semaphore_elem
   {
     struct list_elem elem;              /* List element. */
     struct semaphore semaphore;         /* This semaphore. */
-    // Lily
+    //  
     struct thread* holder;
   };
 
-// Lily
+//  
 bool 
 cmp_sema(const struct list_elem *a,
   const struct list_elem *b,
@@ -372,7 +372,7 @@ cond_wait (struct condition *cond, struct lock *lock)
   
   sema_init (&waiter.semaphore, 0);
   // list_push_back (&cond->waiters, &waiter.elem);
-  // Lily
+  //  
   waiter.holder = thread_current();
   list_insert_ordered(&cond->waiters, &waiter.elem, 
         (list_less_func *)cmp_sema, NULL);
@@ -398,7 +398,7 @@ cond_signal (struct condition *cond, struct lock *lock UNUSED)
   ASSERT (lock_held_by_current_thread (lock));
 
   if (!list_empty (&cond->waiters)) {
-    // Lily
+    //  
     list_sort(&cond->waiters, (list_less_func *)cmp_sema, NULL);
 
     sema_up (&list_entry (list_pop_front (&cond->waiters),

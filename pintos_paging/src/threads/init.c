@@ -349,7 +349,7 @@ run_actions (char **argv)
           PANIC ("action `%s' requires %d argument(s)", *argv, a->argc - 1);
 
       /* Invoke action and advance. */
-      a->function (argv);
+      a->function (argv); 
       argv += a->argc;
     }
   

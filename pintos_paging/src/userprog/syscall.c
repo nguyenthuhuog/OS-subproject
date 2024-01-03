@@ -228,7 +228,7 @@ exit(int status)
 
   /* Close its executable file. */
   file_close(cur->file);
-  // Lily
+  //  
 
   thread_exit();
 }

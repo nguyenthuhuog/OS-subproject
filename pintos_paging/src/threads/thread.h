@@ -102,7 +102,7 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 
-    // Lily
+    // 
     int64_t sleep_until;                /* End timestamp of sleep*/
     int original_priority;   
     struct lock *locked_by;
@@ -114,7 +114,7 @@ struct thread
 
 #ifdef USERPROG
 
-    // Lily -- proj2
+    // -- proj2
     struct thread *parent;              /* Which thread creates this one. */
     
     struct list children;               /* Threads that this one creates. */
@@ -134,9 +134,7 @@ struct thread
 #ifdef VM
     // Project 3: Supplemental page table.
     struct supplemental_page_table *supt;   /* Supplemental Page Table. */
-
-    // Project 3: Memory Mapped Files.
-    struct list mmap_list;              /* List of struct mmap_desc. */
+   //  struct list mmap_list;             
 #endif
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
@@ -147,7 +145,7 @@ struct thread
    Controlled by kernel command-line option "-o mlfqs". */
 extern bool thread_mlfqs;
 
-// Lily
+// 
 bool cmp_priority (const struct list_elem *a, const struct list_elem *b, void *aux);
 bool cmp_donate (const struct list_elem *a, const struct list_elem *b, void *aux);
 void check_priority(void);
@@ -164,7 +162,7 @@ tid_t thread_create (const char *name, int priority, thread_func *, void *);
 void thread_block (void);
 void thread_unblock (struct thread *);
 
-// Lily
+// 
 void thread_sleep_until (int64_t sleep_until);
 
 struct thread *thread_current (void);
@@ -187,7 +185,7 @@ void thread_set_priority (int);
 // int thread_get_recent_cpu (void);
 // int thread_get_load_avg (void);
 
-// Lily
+// 
 void donation_acquire(void);
 void donation_release(void);
 

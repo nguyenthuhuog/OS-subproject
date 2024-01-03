@@ -178,7 +178,7 @@ timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
 
-  // Lily
+  // 
   thread_tick (timer_ticks());
   
   // // add

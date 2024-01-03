@@ -13,22 +13,22 @@ static size_t swap_size;
 
 void
 vm_swap_init ()
-{
+{ 
   ASSERT (SECTORS_PER_PAGE > 0); // 4096/512 = 8?
 
   // Initialize the swap disk
   swap_block = block_get_role(BLOCK_SWAP);
   if(swap_block == NULL) {
     PANIC ("Error: Can't initialize swap block");
-    NOT_REACHED ();
   }
 
-  // Initialize swap_available, with all entry true
+  // Initialize swap_available (a list to save each block of sector avalabality)
   // each single bit of `swap_available` corresponds to a block region,
   // which consists of contiguous [SECTORS_PER_PAGE] sectors,
   // their total size being equal to PGSIZE.
   swap_size = block_size(swap_block) / SECTORS_PER_PAGE;
   swap_available = bitmap_create(swap_size);
+  // set all entry true since all is emty
   bitmap_set_all(swap_available, true);
 }
 
@@ -38,8 +38,10 @@ swap_index_t vm_swap_out (void *page)
   // Ensure that the page is on user's virtual memory.
   ASSERT (page >= PHYS_BASE);
 
-  // Find an available block region to use
-  size_t swap_index = bitmap_scan (swap_available, /*start*/0, /*cnt*/1, true);
+  // Find an available block region to use from 0 (start)
+  // return the first index of a block contain 1(cnt) bits true (value) 
+  // in bitmap name swap_available
+  size_t swap_index = bitmap_scan (swap_available, /*start*/0, /*cnt*/1, /*value*/true);
 
   size_t i;
   for (i = 0; i < SECTORS_PER_PAGE; ++ i) {
@@ -60,7 +62,7 @@ void vm_swap_in (swap_index_t swap_index, void *page)
   // Ensure that the page is on user's virtual memory.
   ASSERT (page >= PHYS_BASE);
 
-  // check the swap region
+  // check the input: swap region
   ASSERT (swap_index < swap_size);
   if (bitmap_test(swap_available, swap_index) == true) {
     // still available slot, error

@@ -17,7 +17,7 @@
   for synchronization */
 static struct lock frame_lock;
 
-/* A mapping from physical address to frame table entry. */
+/* A mapping from (kpage) physical address to frame table entry. */
 static struct hash frame_map;
 
 /* A (circular) list of frames for the clock eviction algorithm. */
@@ -31,15 +31,13 @@ static bool     frame_less_func(const struct hash_elem *, const struct hash_elem
  */
 struct frame_table_entry
   {
-    void *kpage;               /* Kernel page address,
-                                also the key to hash funtion*/
+    void *kpage;               /* Kernel (virtual memory) address, pointer to frame (coi nhu vay), also the key to hash funtion*/
+    void *upage;               /* User (virtual memory) address, pointer to page */
 
-    struct hash_elem helem;    /* see ::frame_map */
-    struct list_elem lelem;    /* see ::frame_list */
+    struct hash_elem helem;    /* belong to frame_map */
+    struct list_elem lelem;    /* belong to frame_list */
 
-    void *upage;               /* User (Virtual Memory) Address, pointer to page */
     struct thread *t;          /* The associated thread. */
-
     bool pinned;               /* Used to prevent a frame from being evicted, while it is acquiring some resources.
                                   If it is true, it is never evicted. */
   };
@@ -60,42 +58,39 @@ vm_frame_init ()
 }
 
 /**
- * Allocate a new frame,
+ * Allocate a new frame, insert it to frame table
  * and return the address of the associated page.
  * while input is pointer to the required page
  */
 void*
-vm_frame_allocate (enum palloc_flags flags, void *upage)
+vm_frame_allocate (void *upage)
 {
   lock_acquire (&frame_lock);
 
-  void *frame_page = palloc_get_page (PAL_USER | flags);
+  void *frame_page = palloc_get_page (PAL_USER);
+
   if (frame_page == NULL) {
     // page allocation failed.
-
     /* first, swap out the page */
-    struct frame_table_entry *f_evicted = clock_pick_evict_frame( thread_current()->pagedir );
 
-#if DEBUG
-    printf("f_evicted: %x th=%x, pagedir = %x, up = %x, kp = %x, hash_size=%d\n", f_evicted, f_evicted->t,
-        f_evicted->t->pagedir, f_evicted->upage, f_evicted->kpage, hash_size(&frame_map));
-#endif
+    // pick a victim
+    struct frame_table_entry *f_evicted = clock_pick_evict_frame( thread_current()->pagedir );
+ 
+    // printf("f_evicted: %x th=%x, pagedir = %x, up = %x, kp = %x, hash_size=%d\n", f_evicted, f_evicted->t,
+    //     f_evicted->t->pagedir, f_evicted->upage, f_evicted->kpage, hash_size(&frame_map));
     ASSERT (f_evicted != NULL && f_evicted->t != NULL);
 
-    // clear the page mapping, and replace it with swap
+    // clear the mapping to page tables, and replace it with swap
     ASSERT (f_evicted->t->pagedir != (void*)0xcccccccc);
     pagedir_clear_page(f_evicted->t->pagedir, f_evicted->upage);
 
-    bool is_dirty = false;
-    is_dirty = is_dirty || pagedir_is_dirty(f_evicted->t->pagedir, f_evicted->upage);
-    is_dirty = is_dirty || pagedir_is_dirty(f_evicted->t->pagedir, f_evicted->kpage);
-
+    // swap
     swap_index_t swap_idx = vm_swap_out( f_evicted->kpage );
     vm_supt_set_swap(f_evicted->t->supt, f_evicted->upage, swap_idx);
-    vm_supt_set_dirty(f_evicted->t->supt, f_evicted->upage, is_dirty);
+   
     vm_frame_do_free(f_evicted->kpage, true); // f_evicted is also invalidated
 
-    frame_page = palloc_get_page (PAL_USER | flags);
+    frame_page = palloc_get_page (PAL_USER);
     ASSERT (frame_page != NULL); // should success in this chance
   }
 
@@ -109,9 +104,9 @@ vm_frame_allocate (enum palloc_flags flags, void *upage)
   frame->t = thread_current ();
   frame->upage = upage;
   frame->kpage = frame_page;
-  frame->pinned = true;         // can't be evicted yet
+  frame->pinned = false;         // can't be evicted yet
 
-  // insert into hash table
+  // insert into hash table: frame table
   hash_insert (&frame_map, &frame->helem);
   list_push_back (&frame_list, &frame->lelem);
 
@@ -137,7 +132,7 @@ void
 vm_frame_remove_entry (void *kpage)
 {
   lock_acquire (&frame_lock);
-  // vm_frame_do_free (kpage, false);
+  vm_frame_do_free (kpage, false);
   lock_release (&frame_lock);
 }
 
@@ -159,7 +154,7 @@ vm_frame_do_free (void *kpage, bool free_page)
 
   struct hash_elem *h = hash_find (&frame_map, &(f_tmp.helem));
   if (h == NULL) {
-    PANIC ("The page to be freed is not stored in the table");
+    return;//"The page to be freed is not stored in the table");
   }
 
   struct frame_table_entry *f;
@@ -188,10 +183,9 @@ struct frame_table_entry* clock_pick_evict_frame( uint32_t *pagedir )
   {
     struct frame_table_entry *e = clock_next_frame();
     // if pinned, continue
-    // if(e->pinned) continue;
+    if(e->pinned) continue;
     
     // if referenced, give a second chance.
-    // else if( pagedir_is_accessed(pagedir, e->upage)) {
     if( pagedir_is_accessed(pagedir, e->upage)) {
       pagedir_set_accessed(pagedir, e->upage, false);
       continue;

@@ -20,7 +20,7 @@
 #include "userprog/process.h"
 #endif
 
-// Lily
+//  
 static const int DEPTH = 8;
 
 
@@ -87,7 +87,7 @@ static void schedule (void);
 void thread_schedule_tail (struct thread *prev); 
 static tid_t allocate_tid (void);
 
-// Lily
+//  
 void print_list(const struct list *list) 
 {
   ASSERT(list != NULL);
@@ -104,7 +104,7 @@ void print_list(const struct list *list)
   printf("\n");
 }
 
-// Lily
+//  
 bool 
 cmp_priority (const struct list_elem *a, 
   const struct list_elem *b, 
@@ -115,7 +115,7 @@ cmp_priority (const struct list_elem *a,
   return left->priority > right->priority;
 }
 
-// Lily
+//  
 bool 
 cmp_donate (const struct list_elem *a, 
   const struct list_elem *b, 
@@ -126,7 +126,7 @@ cmp_donate (const struct list_elem *a,
   return left->priority > right->priority;
 }
 
-// Lily
+//  
 bool 
 cmp_sleep_until (const struct list_elem *a, 
   const struct list_elem *b, 
@@ -137,7 +137,7 @@ cmp_sleep_until (const struct list_elem *a,
   return left->sleep_until < right->sleep_until;
 }
 
-// Lily
+//  
 void check_priority(void) {
 
   if (!list_empty(&ready_list)) {
@@ -211,7 +211,7 @@ thread_start (void)
   sema_down (&idle_started);
 }
 
-// Lily
+//  
 void check_block_list(int64_t current_ticks) {
   // check block_list and wake up unsleep threads
   struct list_elem *e = list_begin(&block_list);
@@ -327,11 +327,11 @@ thread_create (const char *name, int priority,
   // printf("check\n");
   /* Add to run queue. */
   thread_unblock (t);
-  // Lily
+  //  
   // printf("check\n");
 
   t->parent = thread_current();
-    // Lily
+    //  
   // printf("%s has child %s \n", thread_current()->name, name);
   list_push_back(&thread_current()->children, &t->child_elem);
   thread_current()->child_load_status = tid;
@@ -380,7 +380,7 @@ thread_unblock (struct thread *t)
   ASSERT (t->status == THREAD_BLOCKED);
 
   //list_push_back (&ready_list, &t->elem);
-  // Lily
+  //  
   list_insert_ordered(&ready_list, &t->elem, (list_less_func *)cmp_priority, NULL);
 
   t->status = THREAD_READY;
@@ -390,7 +390,7 @@ thread_unblock (struct thread *t)
 
 
 
-// Lily
+//  
 void
 thread_sleep_until (int64_t sleep_until) 
 {
@@ -580,7 +580,7 @@ idle (void *idle_started_ UNUSED)
 /* Function used as the basis for a kernel thread. */
 static void
 kernel_thread (thread_func *function, void *aux) 
-{
+{ 
   ASSERT (function != NULL);
 
   intr_enable ();       /* The scheduler runs with interrupts off. */
@@ -627,7 +627,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->magic = THREAD_MAGIC;
   list_push_back (&all_list, &t->allelem);
 
-  // Lily
+  //  
   // Init donation 
   // t->is_donated = false;
   t->original_priority = priority;
@@ -637,9 +637,9 @@ init_thread (struct thread *t, const char *name, int priority)
   list_init(&t->children);
   sema_init(&t->process_wait, 0);
 
-#ifdef VM
-  list_init(&t->mmap_list);
-#endif
+// #ifdef VM
+//   list_init(&t->mmap_list);
+// #endif
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and
@@ -756,7 +756,7 @@ allocate_tid (void)
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
 
-// Lily
+//  
 void
 donation_acquire(void) 
 {
@@ -786,7 +786,7 @@ donation_acquire(void)
   }
 }
 
-// Lily
+//  
 void 
 donation_release(void)
 { 

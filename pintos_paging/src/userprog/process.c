@@ -38,6 +38,7 @@ process_execute (const char *file_name)
   char *fn_copy;
   tid_t tid;
 
+  // printf("\n----------Huong: processing %s\n", file_name);
   /* Make a copy of FILE_NAME.
      Otherwise there's a race between the caller and load(). */
   fn_copy = palloc_get_page (0);
@@ -48,7 +49,7 @@ process_execute (const char *file_name)
   /* Create a new thread to execute FILE_NAME. */
   // tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
   
-  // Lily 
+  //   
   /* Seperate filen_name into 2 parts --  
      argv0 for filename, save_ptr for other arguments  */
   char *argv0, *save_ptr;
@@ -59,16 +60,16 @@ process_execute (const char *file_name)
   /*The parent process should wait until it knows
      whether the child process successfully loaded its executable. */
   sema_down(&thread_current()->process_wait);
-  // Lily
+  //  
 
   if (tid == TID_ERROR)
     palloc_free_page (fn_copy); 
 
   // return tid;
 
-  // Lily
+  //  
   return thread_current()->child_load_status;
-  // Lily
+  //  
 }
 
 /* A thread function that loads a user process and starts it
@@ -92,7 +93,7 @@ start_process (void *args_)
   /* If load failed, quit. */
   // palloc_free_page (args);
 
-  // Lily
+  //  
   palloc_free_page(pg_round_down(args));
 
   /* Limit on the depth of threads*/
@@ -128,7 +129,7 @@ start_process (void *args_)
      be modified. */
   thread_current()->file = filesys_open (thread_name());
   file_deny_write(thread_current()->file);
-  // Lily
+  //  
 
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
@@ -152,7 +153,7 @@ start_process (void *args_)
 int
 process_wait (tid_t child_tid) 
 { 
-  // Lily
+  //  
   int status = -1;
   struct list_elem *e;
   struct thread *cur = thread_current();
@@ -182,7 +183,7 @@ process_wait (tid_t child_tid)
   }
   
   return status;
-  // Lily
+  //  
 }
 
 /* Free the current process's resources. */
@@ -190,18 +191,6 @@ void
 process_exit (void)
 {
     struct thread *cur = thread_current ();
-
-// #ifdef VM
-//   // mmap descriptors
-//   struct list *mmlist = &cur->mmap_list;
-//   while (!list_empty(mmlist)) {
-//     struct list_elem *e = list_begin (mmlist);
-//     struct mmap_desc *desc = list_entry(e, struct mmap_desc, elem);
-
-//     // in sys_munmap(), the element is removed from the list
-//     ASSERT( sys_munmap (desc->id) == true );
-//   }
-// #endif
 
   /* Deal with its parent -- 
      If its parent is still waiting for it, 
@@ -600,7 +589,7 @@ void push_argument_(void **esp, const char *arg, struct list *list)
   list_push_back(list, &addr->list_elem);
 }
 
-// Lily
+//  
 /* Push all arguments into stack.
    The arrangement of stack is as following:
     |  0          | <-- stack pointer
@@ -688,11 +677,11 @@ setup_stack (void **esp, const char *args)
       {
         *esp = PHYS_BASE;
 
-        // Lily
+        //  
         push_arguments(esp, args);
         // hex_dump(0, PHYS_BASE - 12, 64, true);
         // printf("%x\n", PHYS_BASE - 12);
-        // Lily
+        //  
       }
         
       else
@@ -720,6 +709,7 @@ install_page (void *upage, void *kpage, bool writable)
      address, then map our page there. */
   bool success = (pagedir_get_page (t->pagedir, upage) == NULL);
   success = success && pagedir_set_page (t->pagedir, upage, kpage, writable);
+
 #ifdef VM
   success = success && vm_supt_install_frame (t->supt, upage, kpage);
   // if(success) vm_frame_unpin(kpage);

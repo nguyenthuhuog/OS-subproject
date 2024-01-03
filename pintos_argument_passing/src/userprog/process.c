@@ -23,30 +23,32 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
 void parse_n_push(char *file_name, void **esp) {
 
-  char ** argv;
-  int argc;
-  int total_len;
-  char stored_file_name[256];
   char *token;
   char *last;
+  int total_len;
+  char stored_file_name[256];
   int i;
   int len;
+  char ** argv;
+  int argc;
   
   strlcpy(stored_file_name, file_name, strlen(file_name) + 1);
+
   token = strtok_r(stored_file_name, " ", &last);
   argc = 0;
-  /* calculate argc */
+  /* count number of argument */
   while (token != NULL) {
     argc += 1;
     token = strtok_r(NULL, " ", &last);
   }
+
   argv = (char **)malloc(sizeof(char *) * argc);
-  /* store argv */
+
+  /* parsing */
   strlcpy(stored_file_name, file_name, strlen(file_name) + 1);
   for (i = 0, token = strtok_r(stored_file_name, " ", &last); i < argc; i++, token = strtok_r(NULL, " ", &last)) {
     len = strlen(token);
     argv[i] = token;
-
   }
 
   /* push argv[argc-1] ~ argv[0] */
@@ -58,16 +60,20 @@ void parse_n_push(char *file_name, void **esp) {
     strlcpy(*esp, argv[i], len + 1);
     argv[i] = *esp;
   }
-  /* push word align */
+
+  /* push zeros to aglign */
   *esp -= total_len % 4 != 0 ? 4 - (total_len % 4) : 0;
+  
   /* push NULL */
   *esp -= 4;
   **(uint32_t **)esp = 0;
+  
   /* push address of argv[argc-1] ~ argv[0] */
   for (i = argc - 1; 0 <= i; i--) {
     *esp -= 4;
     **(uint32_t **)esp = argv[i];
   }
+  
   /* push address of argv */
   *esp -= 4;
   **(uint32_t **)esp = *esp + 4;

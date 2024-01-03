@@ -415,7 +415,7 @@ idle (void *idle_started_ UNUSED)
 }
 
 /* Function used as the basis for a kernel thread. */
-static void
+static void 
 kernel_thread (thread_func *function, void *aux) 
 {
   ASSERT (function != NULL);

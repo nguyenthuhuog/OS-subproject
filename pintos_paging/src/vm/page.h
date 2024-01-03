@@ -10,9 +10,9 @@
  */
 enum page_status {
   ALL_ZERO,
-  ON_FRAME,         // Physical memory
-  ON_SWAP,          // Swapped (on swap slot)
-  FROM_FILESYS      // from disk (or executable)
+  ON_FRAME,         
+  ON_SWAP,          
+  FROM_FILESYS      
 };
 
 /**
@@ -21,7 +21,7 @@ enum page_status {
  */
 struct supplemental_page_table
   {
-    /* The hash table, page -> spte */
+    /* The hash table, page_map -> spte */
     struct hash page_map;
   };
 
@@ -34,8 +34,6 @@ struct supplemental_page_table_entry
     struct hash_elem elem;
 
     enum page_status status;
-
-    bool dirty;               /* Dirty bit, used in memory mapped file */
 
     // if ON_SWAP
     swap_index_t swap_index;  /* Stores the swap index if the page is swapped out.
@@ -64,8 +62,6 @@ bool vm_supt_lazy_load (struct supplemental_page_table *supt, void *page,
 
 struct supplemental_page_table_entry* vm_supt_lookup (struct supplemental_page_table *supt, void *);
 bool vm_supt_has_entry (struct supplemental_page_table *, void *page);
-
-bool vm_supt_set_dirty (struct supplemental_page_table *supt, void *, bool);
 
 bool vm_load_page(struct supplemental_page_table *supt, uint32_t *pagedir, void *upage);
 

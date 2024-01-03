@@ -152,18 +152,27 @@ page_fault (struct intr_frame *f)
 
   /* Count page faults. */
   page_fault_cnt++;
-// printf("\n-----------huong: handle page fault in vm way\n");
-  // if (!not_present)
-  //   exit(-1);
-
-  // if (fault_addr == NULL || !is_user_vaddr(fault_addr) 
-  //   || !pagedir_get_page(thread_current()->pagedir, fault_addr))
-  //   exit(-1);
 
   /* Determine cause. */
   not_present = (f->error_code & PF_P) == 0;
   write = (f->error_code & PF_W) != 0;
   user = (f->error_code & PF_U) != 0;
+  /* Page fault debug*/
+  // printf ("Page fault at %p: %s error %s page in %s context.\n",
+  //         fault_addr,
+  //         not_present ? "not present" : "rights violation",
+  //         write ? "writing" : "reading",
+  //         user ? "user" : "kernel");
+  if (!not_present){
+    // printf("\n---------Huong: exit since present\n");
+    exit(-1);}
+
+  if (fault_addr == NULL || !is_user_vaddr(fault_addr) )
+    // || !pagedir_get_page(thread_current()->pagedir, fault_addr))
+    {
+      // printf("\n---------Huong: exit since various cause\n");
+      exit(-1);
+    };
 
   /* To implement virtual memory, delete the rest of the function
      body, and replace it with code that brings in the page to
@@ -192,6 +201,7 @@ page_fault (struct intr_frame *f)
   on_stack_frame = (esp <= fault_addr || fault_addr == f->esp - 4 || fault_addr == f->esp - 32);
   is_stack_addr = (PHYS_BASE - MAX_STACK_SIZE <= fault_addr && fault_addr < PHYS_BASE);
   if (on_stack_frame && is_stack_addr) {
+
     // OK. Do not die, and grow.
     // we need to add new page entry in the SUPT, if there was no page entry in the SUPT.
     // A promising choice is assign a new zero-page.
@@ -199,6 +209,7 @@ page_fault (struct intr_frame *f)
       vm_supt_install_zeropage (curr->supt, fault_page);
   }
 
+  // continue of lazy loading
   if(! vm_load_page(curr->supt, curr->pagedir, fault_page) ) {
     goto PAGE_FAULT_VIOLATED_ACCESS;
   }
@@ -218,12 +229,14 @@ PAGE_FAULT_VIOLATED_ACCESS:
     return;
   }
 
+  // printf("\n----------Huong: about to kill\n");
   /* Page fault can't be handled - kill the process */
-  printf ("Page fault at %p: %s error %s page in %s context.\n",
-          fault_addr,
-          not_present ? "not present" : "rights violation",
-          write ? "writing" : "reading",
-          user ? "user" : "kernel");
-  kill (f);
+  // printf ("Page fault at %p: %s error %s page in %s context.\n",
+  //         fault_addr,
+  //         not_present ? "not  present" : "rights violation",
+  //         write ? "writing" : "reading",
+  //         user ? "user" : "kernel");
+  // kill (f);
+  exit(-1);
 }
 
